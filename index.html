@@ -66,12 +66,70 @@
   <script>
     "use strict";
     // Код писать здесь
+    // Данные комментариев
+    const commentsData = [
+      {
+        name: "Глеб Фокин",
+        date: "12.02.22 12:18",
+        text: "Это будет первый комментарий на этой странице",
+        likes: 3,
+        isLiked: false // состояние лайка от текущего пользователя
+      },
+      {
+        name: "Варвара Н.",
+        date: "13.02.22 19:22",
+        text: "Мне нравится как оформлена эта страница! ❤",
+        likes: 75,
+        isLiked: true
+      }
+    ];
+
     const nameInput = document.querySelector(".add-form-name");
     const textInput = document.querySelector(".add-form-text");
     const addButton = document.querySelector(".add-form-button");
     const commentsList = document.querySelector(".comments");
 
-    // Обработка кнопки «Написать»
+    // Функция рендера всех комментариев
+    function renderComments() {
+      commentsList.innerHTML = ""; // очищаем список
+
+      commentsData.forEach((comment, index) => {
+        const likeClass = comment.isLiked ? "-active-like" : "";
+        const newCommentHTML = `
+          <li class="comment" data-index="${index}">
+            <div class="comment-header">
+              <div>${escapeHtml(comment.name)}</div>
+              <div>${escapeHtml(comment.date)}</div>
+            </div>
+            <div class="comment-body">
+              <div class="comment-text">
+                ${escapeHtml(comment.text)}
+              </div>
+            </div>
+            <div class="comment-footer">
+              <div class="likes">
+                <span class="likes-counter">${comment.likes}</span>
+                <button class="like-button ${likeClass}"></button>
+              </div>
+            </div>
+          </li>`;
+
+        commentsList.insertAdjacentHTML("beforeend", newCommentHTML);
+      });
+    }
+
+    // Простая защита от XSS при выводе пользовательского текста
+      function escapeHtml(str) {
+        if (!str) return "";
+        return str
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;");
+      }
+    
+    // Обработка кнопки «Написать» 
     addButton.addEventListener("click", () => {
       const name = nameInput.value.trim();
       const text = textInput.value.trim();
@@ -79,78 +137,70 @@
       let errorMessage = "";
 
       if (!name && !text) {
-      errorMessage = "Пожалуйста, заполните поля «Имя» и «Комментарий»";
+        errorMessage = "Пожалуйста, заполните поля «Имя» и «Комментарий»";
       } else if (!name) {
-      errorMessage = "Пожалуйста, заполните поле «Имя»";
+        errorMessage = "Пожалуйста, заполните поле «Имя»";
       } else if (!text) {
-      errorMessage = "Пожалуйста, заполните поле «Комментарий»";
+        errorMessage = "Пожалуйста, заполните поле «Комментарий»";
       }
 
-      // Если есть ошибка — показываем и прерываем выполнение
       if (errorMessage) {
-      alert(errorMessage);
-      return;
+        alert(errorMessage);
+        return;
       }
 
-    // Текущая дату и время
-    const now = new Date();
-    const day = String(now.getDate()).padStart(2, "0");
-    const month = String(now.getMonth() + 1).padStart(2, "0");
-    const year = now.getFullYear();
-    const hours = String(now.getHours()).padStart(2, "0");
-    const minutes = String(now.getMinutes()).padStart(2, "0");
+      // Текущая дата и время
+      const now = new Date();
+      const day = String(now.getDate()).padStart(2, "0");
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const year = now.getFullYear();
+      const hours = String(now.getHours()).padStart(2, "0");
+      const minutes = String(now.getMinutes()).padStart(2, "0");
 
-    const dateTimeString = `${day}.${month}.${year} ${hours}:${minutes}`;
+      const dateTimeString = `${day}.${month}.${year} ${hours}:${minutes}`;
 
-    // Шаблон новго комментария
-    const newCommentHTML = `
-      <li class="comment">
-        <div class="comment-header">
-          <div>${name}</div>
-          <div>${dateTimeString}</div>
-        </div>
-        <div class="comment-body">
-          <div class="comment-text">
-          ${text}
-          </div>
-        </div>
-        <div class="comment-footer">
-          <div class="likes">
-            <span class="likes-counter">0</span>
-            <button class="like-button"></button>
-          </div>
-        </div>
-      </li>`;
+      // Добавляем новый комментарий в массив данных
+      commentsData.push({
+        name,
+        date: dateTimeString,
+        text,
+        likes: 0,
+        isLiked: false
+      });
 
-    // Новый комментарий в конец списка
-    commentsList.innerHTML += newCommentHTML;
+      // Перерисовываем все комментарии
+      renderComments();
 
-    // Очистка полей после добавления комментария
-    nameInput.value = "";
-    textInput.value = "";
+      // Очистка полей
+      nameInput.value = "";
+      textInput.value = "";
     });
 
-    // Делегирование события для лайков
+    // Обработка клика на лайк
     commentsList.addEventListener("click", (event) => {
       const button = event.target.closest(".like-button");
       if (!button) return;
 
-      const counter = button.parentElement.querySelector(".likes-counter");
-      let currentLikes = parseInt(counter.textContent, 10) || 0;
+      const commentElement = button.closest(".comment");
+      const index = Number(commentElement.getAttribute("data-index"));
 
-      // Переключаем состояние
-      if (button.classList.contains("-active-like")) {
-      // Убираем лайк
-      button.classList.remove("-active-like");
-      currentLikes--;
+      if (isNaN(index) || index < 0 || index >= commentsData.length) return;
+
+      // Смена состояний в массиве данных
+      const comment = commentsData[index];
+      if (comment.isLiked) {
+        comment.likes--;
+        comment.isLiked = false;
       } else {
-      // Ставим лайк
-      button.classList.add("-active-like");
-      currentLikes++;
+        comment.likes++;
+        comment.isLiked = true;
       }
 
-    counter.textContent = currentLikes;
+      renderComments();
     });
+
+    // Первоначальная отрисовка
+    renderComments();
     console.log("It works!");
   </script>
 </html>
