@@ -89,6 +89,9 @@
     const addButton = document.querySelector(".add-form-button");
     const commentsList = document.querySelector(".comments");
 
+    // Переменная для хранения данных ответа (чтобы отличать обычный комментарий от ответа)
+    let replyTo = null;
+
     // Функция рендера всех комментариев
     function renderComments() {
       commentsList.innerHTML = ""; // очищаем список
@@ -118,18 +121,18 @@
       });
     }
 
-    // Простая защита от XSS при выводе пользовательского текста
-      function escapeHtml(str) {
-        if (!str) return "";
-        return str
-          .replace(/&/g, "&amp;")
-          .replace(/</g, "&lt;")
-          .replace(/>/g, "&gt;")
-          .replace(/"/g, "&quot;")
-          .replace(/'/g, "&#039;");
-      }
-    
-    // Обработка кнопки «Написать» 
+    // Простая защита от XSS при выводе пользовательского текста через replaceAll
+    function escapeHtml(str) {
+      if (!str) return "";
+      return str
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    // Обработка кнопки «Написать»
     addButton.addEventListener("click", () => {
       const name = nameInput.value.trim();
       const text = textInput.value.trim();
@@ -168,6 +171,9 @@
         isLiked: false
       });
 
+      // Сбрасываем состояние ответа после отправки
+      replyTo = null;
+
       // Перерисовываем все комментарии
       renderComments();
 
@@ -176,17 +182,30 @@
       textInput.value = "";
     });
 
-    // Обработка клика на лайк
+    // Обработка кликов по списку комментариев (лайки и ответы)
     commentsList.addEventListener("click", (event) => {
-      const button = event.target.closest(".like-button");
-      if (!button) return;
+      // Ответ не подставляется при клике на лайк
+      const likeButton = event.target.closest(".like-button");
+      if (likeButton) {
+        // Обрабатываем только лайк, дальше не идём
+        handleLikeClick(likeButton);
+        return; // предотвращаем обработку как ответа
+      }
 
+      // Если клик был не по лайку, обрабатываем как клик по комментарию для ответа
+      const commentElement = event.target.closest(".comment");
+      if (commentElement) {
+        handleReplyClick(commentElement);
+      }
+    });
+
+    // Отдельная функция для обработки лайка
+    function handleLikeClick(button) {
       const commentElement = button.closest(".comment");
       const index = Number(commentElement.getAttribute("data-index"));
 
       if (isNaN(index) || index < 0 || index >= commentsData.length) return;
 
-      // Смена состояний в массиве данных
       const comment = commentsData[index];
       if (comment.isLiked) {
         comment.likes--;
@@ -197,7 +216,23 @@
       }
 
       renderComments();
-    });
+    }
+
+    // Логика ответа на комментарий
+    function handleReplyClick(commentElement) {
+      const index = Number(commentElement.getAttribute("data-index"));
+      if (isNaN(index) || index < 0 || index >= commentsData.length) return;
+
+      const comment = commentsData[index];
+
+      // Подставляем имя и текст в форму
+      nameInput.value = comment.name;
+      // Формируем цитату с символом >
+      textInput.value = `> ${escapeHtml(comment.text)}\n`;
+
+      // Сохраняем контекст
+      replyTo = index;
+    }
 
     // Первоначальная отрисовка
     renderComments();
