@@ -71,8 +71,7 @@ export function handleReplyClick(commentElement, nameInput, textInput, commentsD
 
     const comment = commentsData[index]
 
-    nameInput.value = comment.name
-    textInput.value = `> ${escapeHtml(comment.text)}\n`
+    textInput.value = `> ${escapeHtml(comment.name)}: ${escapeHtml(comment.text)}\n`
 }
 
 // Навешивание всех обработчиков на DOM
