@@ -1,4 +1,4 @@
-// Защита от XSS: теперь используем replaceAll, как требуется в задании
+// Защита от XSS: теперь используем replaceAll
 export function escapeHtml(str) {
     if (!str) return ''
     return str

@@ -1,44 +1,44 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
-  <head>
-    <title>Проект "Комменты"</title>
-    <meta charset="utf-8" />
-    <link rel="stylesheet" href="styles.css" />
-  </head>
+    <head>
+        <title>Проект "Комменты"</title>
+        <meta charset="utf-8" />
+        <link rel="stylesheet" href="styles.css" />
+    </head>
 
-  <body>
-    <div class="container">
-      <!-- Состояние загрузки при старте -->
-      <div class="loading-state" id="loadingState">
-        Загрузка комментариев…
-      </div>
+    <body>
+        <div class="container">
+            <!-- Состояние загрузки при старте -->
+            <div class="loading-state" id="loadingState">
+                Загрузка комментариев…
+            </div>
 
-      <ul class="comments" id="commentsList">
-        <!-- Комментарии будут здесь -->
-      </ul>
+            <ul class="comments" id="commentsList">
+                <!-- Комментарии будут здесь -->
+            </ul>
 
-      <!-- Состояние добавления комментария -->
-      <div class="adding-state" id="addingState" style="display: none;">
-        Комментарий добавляется…
-      </div>
+            <!-- Состояние добавления комментария -->
+            <div class="adding-state" id="addingState" style="display: none">
+                Комментарий добавляется…
+            </div>
 
-      <div class="add-form" id="addForm">
-        <input
-          type="text"
-          class="add-form-name"
-          placeholder="Введите ваше имя"
-        />
-        <textarea
-          class="add-form-text"
-          placeholder="Введите ваш комментарий"
-          rows="4"
-        ></textarea>
-        <div class="add-form-row">
-          <button class="add-form-button">Написать</button>
+            <div class="add-form" id="addForm">
+                <input
+                    type="text"
+                    class="add-form-name"
+                    placeholder="Введите ваше имя"
+                />
+                <textarea
+                    class="add-form-text"
+                    placeholder="Введите ваш комментарий"
+                    rows="4"
+                ></textarea>
+                <div class="add-form-row">
+                    <button class="add-form-button">Написать</button>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
 
-    <script type="module" src="./script.js"></script>
-  </body>
+        <script type="module" src="./script.js"></script>
+    </body>
 </html>
