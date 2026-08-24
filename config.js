@@ -1,3 +1,5 @@
-const PERSONAL_KEY = 'maxim-fedoretc'
+export const PERSONAL_KEY = 'maxim-fedoretc'
 
-export const baseUrl = `https://wedev-api.sky.pro/api/v1/${PERSONAL_KEY}/comments`
+export const COMMENTS_URL = `https://wedev-api.sky.pro/api/v2/${PERSONAL_KEY}/comments`
+
+export const USERS_URL = 'https://wedev-api.sky.pro/api/user'

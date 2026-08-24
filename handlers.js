@@ -1,19 +1,17 @@
 import { addComment } from './api.js'
 import { loadComments } from './api.js'
 import { renderCommentsFromApi } from './renderer.js'
+import { renderLogin } from './renderLogin.js'
 
 function delay(interval = 500) {
-  return new Promise((resolve) => {
-    setTimeout(() => resolve(), interval)
-  })
+  return new Promise((resolve) => setTimeout(resolve, interval))
 }
 
-// Автоповтор при 500
-async function addCommentWithRetry(name, text, maxRetries = 3) {
+async function addCommentWithRetry(text, token, maxRetries = 3) {
   let lastError
   for (let i = 0; i <= maxRetries; i++) {
     try {
-      return await addComment(name, text)
+      return await addComment(text, token)
     } catch (err) {
       lastError = err
       if (err.message === 'Сервер сломался, попробуй позже') {
@@ -30,42 +28,36 @@ async function addCommentWithRetry(name, text, maxRetries = 3) {
 }
 
 export async function handleAddComment(
-  nameInput,
   textInput,
   commentsList,
   addForm,
   addingState,
+  token
 ) {
-  const name = nameInput.value.trim()
   const text = textInput.value.trim()
 
-  // Валидация не короче 3 символов
-  if (name.length < 3 || text.length < 3) {
-    alert('Имя и комментарий должны быть не короче 3 символов')
-    return // поля НЕ очищаем — значения остаются в форме
+  if (text.length < 3) {
+    alert('Комментарий должен быть не короче 3 символов')
+    return
   }
 
   addForm.style.display = 'none'
   addingState.style.display = 'block'
 
   try {
-    await addCommentWithRetry(name, text)
-
-    const comments = await loadComments(commentsList)
+    await addCommentWithRetry(text, token)
+    const comments = await loadComments()
     renderCommentsFromApi(commentsList, comments)
-
-    // Очищаем поля только при успехе
-    nameInput.value = ''
     textInput.value = ''
   } catch (err) {
     console.error(err)
-
-    // Обработка «нет интернета»
-    if (
-      err instanceof TypeError ||
-      (err.name === 'DOMException' && err.message.includes('network'))
-    ) {
+    if (err.message.includes('интернет') || err instanceof TypeError) {
       alert('Кажется, у вас сломался интернет, попробуйте позже')
+    } else if (err.message.includes('Сессия истекла')) {
+      alert('Сессия истекла, войдите заново')
+      localStorage.removeItem('userToken')
+      localStorage.removeItem('userName')
+      renderLogin()
     } else {
       alert(err.message)
     }
@@ -77,7 +69,6 @@ export async function handleAddComment(
 
 export async function handleLikeClick(button) {
   if (button.classList.contains('-loading-like')) return
-
   const commentElement = button.closest('.comment')
   const counterSpan = commentElement.querySelector('.likes-counter')
   const currentLikes = parseInt(counterSpan.textContent, 10) || 0
@@ -96,46 +87,10 @@ export async function handleLikeClick(button) {
   button.classList.remove('-loading-like')
 }
 
-export function handleReplyClick(commentElement, nameInput, textInput) {
-  const originalText =
-    commentElement.querySelector('.comment-text').textContent
-  const originalAuthor = commentElement.querySelector(
-    '.comment-header > div:first-child',
-  ).textContent
-
+export function handleReplyClick(commentElement, textInput) {
+  const originalText = commentElement.querySelector('.comment-text').textContent
+  const originalAuthor = commentElement.querySelector('.comment-header > div:first-child').textContent
   textInput.value = `> ${escapeHtml(originalAuthor)}: ${escapeHtml(originalText)}\n`
-}
-
-export function attachHandlers(
-  addButton,
-  commentsList,
-  nameInput,
-  textInput,
-  addForm,
-  addingState,
-) {
-  addButton.addEventListener('click', () => {
-    handleAddComment(
-      nameInput,
-      textInput,
-      commentsList,
-      addForm,
-      addingState,
-    )
-  })
-
-  commentsList.addEventListener('click', (event) => {
-    const likeButton = event.target.closest('.like-button')
-    if (likeButton) {
-      handleLikeClick(likeButton)
-      return
-    }
-
-    const commentElement = event.target.closest('.comment')
-    if (commentElement) {
-      handleReplyClick(commentElement, nameInput, textInput)
-    }
-  })
 }
 
 function escapeHtml(str) {
@@ -146,4 +101,36 @@ function escapeHtml(str) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;')
+}
+
+export function attachHandlers(
+  addButton,
+  commentsList,
+  nameInput,
+  textInput,
+  addForm,
+  addingState,
+  token
+) {
+  addButton.addEventListener('click', () => {
+    handleAddComment(
+      textInput,
+      commentsList,
+      addForm,
+      addingState,
+      token
+    )
+  })
+
+  commentsList.addEventListener('click', (event) => {
+    const likeButton = event.target.closest('.like-button')
+    if (likeButton) {
+      handleLikeClick(likeButton)
+      return
+    }
+    const commentElement = event.target.closest('.comment')
+    if (commentElement) {
+      handleReplyClick(commentElement, textInput)
+    }
+  })
 }
